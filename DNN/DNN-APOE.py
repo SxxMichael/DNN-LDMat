@@ -74,7 +74,7 @@ lr_scheduler = ExponentialDecay(
     staircase=staircase)
 
 optimizer = keras.optimizers.Adam(learning_rate=lr_scheduler)
-activation = "sigmoid"
+activation = "relu"
 d_train = X_train.shape[1]
 loci = 77
 
