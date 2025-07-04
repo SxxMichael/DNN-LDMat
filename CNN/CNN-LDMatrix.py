@@ -137,7 +137,7 @@ model_cnn1.add(Dropout(drop_rate))
 
 
 # not sure if we want the final to have a activation
-model_cnn1.add(layers.Dense(len(train_output[0]), activation = "relu"))
+model_cnn1.add(layers.Dense(len(train_output[0])))
 
 
 
