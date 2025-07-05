@@ -143,7 +143,7 @@ model_dnn.fit(X_train_ld, y_train, epochs=epochs, batch_size=batch_size, verbose
 
 # Evaluate training, test loss
 evaluate_train=model_dnn.evaluate(X_train_ld, y_train)
-print('Train loss', evaluate_train)
+print(evaluate_train)
 
 # Prediction on Test LD Matrix
 X_test_uptri = X_test[np.triu_indices_from(X_test, k=1)]
@@ -164,5 +164,5 @@ for i in range(repetitions):
     test_err[i] = np.mean((y_test - sampled) ** 2)
 
 evaluate_test=np.mean(test_err)
-print('Test loss', evaluate_test)
+print(evaluate_test)
 
