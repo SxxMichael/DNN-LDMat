@@ -168,7 +168,7 @@ X_test_upper_triangles = X_test[:, triu_idx[0], triu_idx[1]]
 X_test_ld = X_test_upper_triangles.reshape(1, -1)
 
 # Model Evaluation
-repetitions = 20
+repetitions = 2000
 test_err = np.zeros(repetitions)
 
 for i in range(repetitions):
