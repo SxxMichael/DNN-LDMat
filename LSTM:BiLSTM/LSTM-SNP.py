@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import keras
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.layers import LSTM, Dense, Input
 from keras.optimizers.schedules import ExponentialDecay
 
 SNP = open('SNP.txt', 'r').read()
@@ -31,6 +31,7 @@ X_train = np.array(train[:cutoff])[..., np.newaxis]
 y_train = np.array(targets[:cutoff]).reshape(-1)
 X_test = np.array(train[cutoff:])[..., np.newaxis]
 y_test = np.array(targets[cutoff:]).reshape(-1)
+timesteps = X_train.shape[1]
 
 
 initial_learning_rate = 0.001
@@ -55,7 +56,7 @@ batch_size = 256
 
 # Model construction
 model_lstm = keras.Sequential([
-    
+    Input(shape=(timesteps, 1)),
     LSTM(10, return_sequences=True),
     LSTM(10, return_sequences=True),
     LSTM(10, return_sequences=True),
@@ -73,8 +74,8 @@ model_lstm.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, verbose=0
 
 # Evaluate training, test loss
 evaluate_train = model_lstm.evaluate(X_train, y_train)
-print('Train loss', evaluate_train)
-
 evaluate_test = model_lstm.evaluate(X_test, y_test)
-print('Test loss', evaluate_test)
+
+print(evaluate_train)
+print(evaluate_test)
 
