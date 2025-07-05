@@ -110,7 +110,7 @@ lr_scheduler = ExponentialDecay(
 
 optimizer = keras.optimizers.Adam(learning_rate=lr_scheduler)
 activation = "relu"
-X_train_uptri = X_train[np.triu_indices_from(X_train, k=1)]
+X_train_uptri = X_train[np.triu_indices_from(X_train, k=0)]
 X_train_ld = X_train_uptri.reshape(1,-1)
 d_train = X_train_ld.shape[1]
 loci = 77
