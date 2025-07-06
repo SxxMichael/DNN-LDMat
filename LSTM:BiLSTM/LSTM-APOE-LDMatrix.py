@@ -1,53 +1,98 @@
 import numpy as np
 import keras
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.layers import Bidirectional, LSTM, Dense, Input
 from keras.optimizers.schedules import ExponentialDecay
 
-def read_file(fileName):
-    temp = open(fileName, 'r').read()
-    temp = temp.split("\n")
-    temp = temp[:len(temp) - 1]
-    return temp
+train_data = open('apoe_LDMat_train.txt', 'r').read()
+test_data = open('apoe_LDMat_test.txt', 'r').read()
+train_response = open('hip_res_train.txt', 'r').read()
+test_response = open('hip_res_test.txt', 'r').read()
 
-X_train = read_file('apoe_LDMat_train.txt')[1:]
-X_test = read_file('apoe_LDMat_test.txt')[1:]
+train_data = train_data.split("\n") #inputs
+test_data = test_data.split("\n") 
+train_response = train_response.split("\n") #expected outputs
+test_response = test_response.split("\n") 
 
-y_train = read_file('hip_res_train.txt')[1:]
-y_test = read_file('hip_res_test.txt')[1:]
+train_data = train_data[1:len(train_data)-1]		#Remove the 1st line and last blank line
+test_data = test_data[1:len(test_data)-1]
+train_response = train_response[1:len(train_response)-1]
+test_response = test_response[1:len(test_response)-1]
+
+train_in = []		# Create arrays to hold data
+test_in = []
+train_out = []
+test_out = []
+
+temp = []
+for i in train_data:
+    cur = (i.split()) #Create an array to hold data in the case
+    cur = cur[1:]     #Remove the "case #" at the start of every case
+    for i in range(len(cur)):   #Seperate the data in that case
+        cur[i] = float(cur[i])  #Convert the String into numbers
+    temp.append(np.array(cur))  #Add the array to the data set
+train_in.append(temp)
+
+temp = []		# Repeat the process for test data
+for i in test_data:
+    cur = (i.split())
+    cur = cur[1:]
+    for i in range(len(cur)):
+        cur[i] = float(cur[i])
+    temp.append(np.array(cur))
+test_in.append(temp)
+
+list_sum = 0
+list_long = 0
+list_avg = 0
+
+for i in train_response:
+    cur = i.split()
+    if cur[1] != 'NA':
+        list_sum = list_sum + float(cur[1])
+        list_long = list_long + 1
+
+list_avg = list_sum / list_long
+
+temp = []
+for i in train_response:
+    cur = i.split()
+    if cur[1] == 'NA':
+        #print(cur[1])
+        temp.append(float(list_avg))
+    else:
+        temp.append(float(cur[1]))
+
+train_out.append(temp)
 
 
-train1 = []
-targets1 = []
+list_sum = 0
+list_long = 0
+list_avg = 0
 
-for i in range(len(X_train)):
+for i in test_response:
+    cur = i.split()
+    if cur[1] != 'NA':
+        list_sum = list_sum + float(cur[1])
+        list_long = list_long + 1
 
-    if y_train[i].split()[1:][0] == 'NA': # If NA, skip this line
-        continue
-    
-    train1.append(np.array(X_train[i].split()[1:], dtype=float))
-    targets1.append(np.array(y_train[i].split()[1], dtype=float))
+list_avg = list_sum / list_long
 
-train2 = []
-targets2 = []
+temp = []
+for i in test_response:
+    cur = i.split()
+    if cur[1] == 'NA':
+        #print(cur[1])
+        temp.append(float(list_avg))
+    else:
+        temp.append(float(cur[1]))
 
-for i in range(len(y_test)):
+test_out.append(temp)  
 
-    if y_test[i].split()[1:][0] == 'NA': # If NA, skip this line
-        continue
-    
-    train2.append(np.array(X_test[i].split()[1:], dtype=float))
-    targets2.append(np.array(y_test[i].split()[1], dtype=float))
-
-
-X_train = np.array(train1)
-X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], 1))
-X_test = np.array(train2)
-X_test = X_test.reshape((X_test.shape[0], X_test.shape[1], 1))
-
-y_train = np.array(targets1).reshape(-1)
-y_test = np.array(targets2).reshape(-1)
-
+X_train=np.array(train_in) # LDMatrix_Train
+X_test=np.array(test_in)   # LDMatrix_test
+y_train=np.array(train_out)   #train_response
+y_test=np.array(test_out)   #test_response
 
 
 initial_learning_rate = 0.001
@@ -72,7 +117,7 @@ batch_size = 256
 
 # Model construction
 model_lstm = keras.Sequential([
-    
+    Input(shape = (X_train.shape[1], X_train.shape[2])),
     LSTM(10, return_sequences=True),
     LSTM(10, return_sequences=True),
     LSTM(10, return_sequences=True),
@@ -89,9 +134,25 @@ model_lstm.compile(loss="mse", optimizer=optimizer)
 model_lstm.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, verbose=0)
 
 # Evaluate training, test loss
-evaluate_train=model_lstm.evaluate(X_train, y_train)
-print('Train loss', evaluate_train)
+evaluate_train=model_bilstm.evaluate(X_train, y_train, verbose = 0)
+print('evaluate_train)
 
-evaluate_test=model_lstm.evaluate(X_test, y_test)
-print('Test loss', evaluate_test)
+# Model Evaluation
+repetitions = 2000
+test_err = np.zeros(repetitions)
+
+for i in range(repetitions):
+    # prediction based on test data
+    predicted_test = np.squeeze(model_bilstm.predict(X_test, verbose=0))
+
+    # sample individuals from the outputs
+    sampled = np.random.choice(predicted_test, size=y_test.shape[1], replace=True)
+
+    # calculate mse
+    test_err[i] = np.mean((y_test - sampled) ** 2)
+
+evaluate_test=np.mean(test_err)
+print(evaluate_test)
+
+
 
