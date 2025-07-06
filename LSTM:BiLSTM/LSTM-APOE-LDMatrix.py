@@ -123,7 +123,7 @@ model_lstm = keras.Sequential([
     LSTM(10, return_sequences=True),
     LSTM(10, return_sequences=True),
     LSTM(10),
-    Dense(1)
+    Dense(y_train.shape[1])
     
 ])
 
@@ -134,7 +134,7 @@ model_lstm.compile(loss="mse", optimizer=optimizer)
 model_lstm.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, verbose=0)
 
 # Evaluate training, test loss
-evaluate_train=model_bilstm.evaluate(X_train, y_train, verbose = 0)
+evaluate_train=model_lstm.evaluate(X_train, y_train, verbose = 0)
 print('evaluate_train)
 
 # Model Evaluation
@@ -143,7 +143,7 @@ test_err = np.zeros(repetitions)
 
 for i in range(repetitions):
     # prediction based on test data
-    predicted_test = np.squeeze(model_bilstm.predict(X_test, verbose=0))
+    predicted_test = np.squeeze(model_lstm.predict(X_test, verbose=0))
 
     # sample individuals from the outputs
     sampled = np.random.choice(predicted_test, size=y_test.shape[1], replace=True)
